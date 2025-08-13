@@ -27,7 +27,7 @@ brew tap hashicorp/tap
 brew install hashicorp/tap/terraform
 
 # Verify the installation
-terraform version
+terraform --version
 ```
 This is for my mac,you can as well check terraform documentations on how to install it on your preferred OS.
 
