@@ -5,6 +5,7 @@ resource "aws_db_instance" "terra_db" {
   engine_version       = var.engine_version
   instance_class       = var.instance_class
   db_name              = var.name
+  identifier           = var.identifier
   username             = var.username
   password             = var.password
   parameter_group_name = var.parameter_group_name

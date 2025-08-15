@@ -1,3 +1,15 @@
+# `variables.tf`
+variable "ami_id" {
+  description = "The AMI ID to use for the EC2 instance."
+  type        = string
+}
+
+variable "instance_type" {
+  description = "The EC2 instance type."
+  type        = string
+  default     = "t2.micro"
+}
+
 variable "allocated_storage" {
   type        = number
   description = "The allocated storage"
@@ -50,12 +62,13 @@ variable "parameter_group_name" {
 }
 
 variable "publicly_accessible" {
-  description = "Set to true to allow public access to the RDS instance."
+  description = "value to allow public access to the RDS instance."
   type        = bool
   default     = true
 }
+
 variable "skip_final_snapshot" {
-  description = "Set to true to skip the final snapshot on DB deletion."
+  description = "value to skip the final snapshot on DB deletion."
   type        = bool
-  default     = true 
+  default = true
 }
