@@ -35,7 +35,7 @@ variable "instance_class" {
   description = "The instance class"
 }
 
-variable "name" {
+variable "db_name" {
   type        = string
   description = "The database name"
 }
