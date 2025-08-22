@@ -9,7 +9,7 @@ output "rds_instance_endpoint" {
 }
 
 output "rds_instance_database_name" {
-  value       = aws_db_instance.terra_db.name
+  value       = aws_db_instance.terra_db.db_name
   description = "The name of the database"
 }
 

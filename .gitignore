@@ -19,3 +19,5 @@ crash.log
 *.log
 *.err
 *.tmp
+
+.env

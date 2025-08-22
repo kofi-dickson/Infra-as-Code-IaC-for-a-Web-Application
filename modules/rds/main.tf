@@ -9,5 +9,7 @@ resource "aws_db_instance" "terra_db" {
   username             = var.username
   password             = var.password
   parameter_group_name = var.parameter_group_name
+  db_subnet_group_name   = var.db_subnet_group_name
+  vpc_security_group_ids = var.security_group_ids
 }
  

@@ -1,26 +1,81 @@
 provider "aws" {
-    region = "us-east-2"
+  region = "us-east-2"
 }
 
+# Add the Vault provider to your configuration.
+provider "vault" {
+  address        = "http://18.118.198.40:8200"
+  skip_child_token = true
+
+  auth_login {
+    path = "auth/approle/login"
+    parameters = {
+      role_id   = "f7227a50-fa6f-ae34-d13e-95f4e62dd744"
+      secret_id = "8c9e959f-6aec-7378-7e14-a567196a523b"
+    }
+  }
+}
+
+data "vault_generic_secret" "rds_password" {
+  path = "kv/rds_password/database"
+}
+
+# --------------------------------------------------------------------------------------------------
+# MODULES
+# These blocks instantiate your modules. The networking and security group resources
+# are now managed by the 'vpc' module.
+# --------------------------------------------------------------------------------------------------
+
+# Call the new VPC module. This will create all your networking resources.
+# Since all values are hardcoded inside the module, you don't need to pass any variables here.
+module "vpc" {
+  source = "./modules/vpc"
+}
 
 module "ec2" {
-  source = "./modules/ec2"
-  ami_id = var.ami_id
-  instance_type = var.instance_type
+  source             = "./modules/ec2"
+  ami_id             = var.ec2_ami_id
+  instance_type      = var.ec2_instance_type
+  # Get the public subnet ID from the vpc module's outputs.
+  subnet_id          = module.vpc.public_subnet_id
+  # Get the EC2 security group ID from the vpc module's outputs.
+  security_group_ids = [module.vpc.ec2_security_group_id]
 }
 
 module "rds" {
-  source = "./modules/rds"
-  allocated_storage    = var.allocated_storage
-  storage_type         = var.storage_type
-  engine               = var.engine
-  engine_version       = var.engine_version
-  instance_class       = var.instance_class
-  db_name              = var.db_name
-  identifier           = var.identifier
-  username             = var.username
-  password             = var.password
-  parameter_group_name = var.parameter_group_name
-  publicly_accessible  =  var.publicly_accessible
-  skip_final_snapshot  =  var.skip_final_snapshot
+  source               = "./modules/rds"
+  allocated_storage    = var.rds_allocated_storage
+  storage_type         = var.rds_storage_type
+  engine               = var.rds_engine
+  instance_class       = var.rds_instance_class
+  db_name              = var.rds_db_username
+  identifier           = var.rds_identifier
+  username             = var.rds_db_username
+  # Get the password from Vault using the data source.
+  password             = data.vault_generic_secret.rds_password.data["db_password"]   # db_password is the key in which i stored the password
+  parameter_group_name = var.rds_parameter_group_name
+  publicly_accessible  = false
+  skip_final_snapshot  = var.rds_skip_final_snapshot
+  # Get the DB subnet group name from the vpc module's outputs.
+  db_subnet_group_name = module.vpc.db_subnet_group_name
+  # Get the RDS security group ID from the vpc module's outputs.
+  security_group_ids = [module.vpc.rds_security_group_id]
+}
+
+# --------------------------------------------------------------------------------------------------
+# VAULT SERVER
+# This is the resource block for the existing Vault EC2 instance you want to import.
+# --------------------------------------------------------------------------------------------------
+resource "aws_instance" "vault_server" {
+  ami           = "ami-0cfde0ea8edd312d4"
+  instance_type = "t2.micro"
+  
+  # Associate the instance with the public subnet and the new Vault security group,
+  # both retrieved from the vpc module.
+  subnet_id = module.vpc.public_subnet_id
+  vpc_security_group_ids = [module.vpc.vault_security_group_id]
+
+  tags = {
+    Name = "vault_server"
+  }
 }

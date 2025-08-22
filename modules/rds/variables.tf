@@ -39,9 +39,9 @@ variable "username" {
 }
 
 variable "password" {
+  description = "The master password for the database."
   type        = string
-  description = "The database password"
-  sensitive   = true
+  sensitive   = true 
 }
 
 variable "parameter_group_name" {
@@ -58,4 +58,14 @@ variable "skip_final_snapshot" {
   description = "Set to true to skip the final snapshot on DB deletion."
   type        = bool
   default     = true 
+}
+
+variable "db_subnet_group_name" {
+  description = "Name of the DB subnet group to place the RDS instance in."
+  type        = string
+}
+
+variable "security_group_ids" {
+  description = "A list of VPC security group IDs to associate with the RDS instance."
+  type        = list(string)
 }
