@@ -3,21 +3,31 @@ provider "aws" {
 }
 
 # Add the Vault provider to your configuration.
-provider "vault" {
-  address        = "http://18.118.198.40:8200"
-  skip_child_token = true
+provider "vault" {}
 
-  auth_login {
-    path = "auth/approle/login"
-    parameters = {
-      role_id   = "f7227a50-fa6f-ae34-d13e-95f4e62dd744"
-      secret_id = "8c9e959f-6aec-7378-7e14-a567196a523b"
-    }
+
+data "vault_generic_secret" "rds_password" {
+  path = "kv/data/rds_password/database"
+}
+
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical's AWS account ID
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
 }
 
-data "vault_generic_secret" "rds_password" {
-  path = "kv/rds_password/database"
+data "aws_rds_engine_version" "mysql" {
+  engine = "mysql"
+  version = "8.0.40"
 }
 
 # --------------------------------------------------------------------------------------------------
@@ -34,7 +44,7 @@ module "vpc" {
 
 module "ec2" {
   source             = "./modules/ec2"
-  ami_id             = var.ec2_ami_id
+  ami_id             = data.aws_ami.ubuntu.id
   instance_type      = var.ec2_instance_type
   # Get the public subnet ID from the vpc module's outputs.
   subnet_id          = module.vpc.public_subnet_id
@@ -45,13 +55,13 @@ module "ec2" {
 module "rds" {
   source               = "./modules/rds"
   allocated_storage    = var.rds_allocated_storage
+  engine_version       = data.aws_rds_engine_version.mysql.version
   storage_type         = var.rds_storage_type
-  engine               = var.rds_engine
+  engine               = data.aws_rds_engine_version.mysql.engine
   instance_class       = var.rds_instance_class
-  db_name              = var.rds_db_username
+  db_name              = var.rds_db_name
   identifier           = var.rds_identifier
   username             = var.rds_db_username
-  # Get the password from Vault using the data source.
   password             = data.vault_generic_secret.rds_password.data["db_password"]   # db_password is the key in which i stored the password
   parameter_group_name = var.rds_parameter_group_name
   publicly_accessible  = false

@@ -1,8 +1,3 @@
-# `variables.tf`
-variable "ec2_ami_id" {
-  description = "The AMI ID to use for the EC2 instance."
-  type        = string
-}
 
 variable "ec2_instance_type" {
   description = "The EC2 instance type."
@@ -25,18 +20,6 @@ variable "rds_storage_type" {
   description = "The storage type of the RDS instance."
   type        = string
   default     = "gp2"
-}
-
-variable "rds_engine" {
-  description = "The database engine for the RDS instance."
-  type        = string
-  default     = "mysql"
-}
-
-variable "rds_engine_version" {
-  description = "The database engine version."
-  type        = string
-  default     = "8.0.36"
 }
 
 variable "rds_instance_class" {
@@ -86,3 +69,4 @@ variable "rds_db_subnet_group_name" {
   description = "The name of the DB subnet group to associate with the instance."
   type        = string
 }
+
